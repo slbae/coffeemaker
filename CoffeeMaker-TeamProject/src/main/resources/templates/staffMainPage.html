@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Coffee Maker Staff</title>
+    <style>
+        body {
+            font-family:monospace;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            background-color: #2e7d32;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            font-size: 36px;
+        }
+
+        h3 {
+            font-size: 24px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            text-align: center;
+        }
+
+        li {
+            margin-left: 36%;
+            margin-right: 36%;
+            margin-top: 20px;
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 20px;
+        }
+
+        a {
+            color: white;
+        }
+
+        .logout-button {
+            position: absolute;
+            top: 40px;
+            left: 10px;
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+    <script>
+		 var app = angular.module('staffMain', []);
+        	app.controller('staffMainCtrl', function ($scope, $http, $q) {
+				$scope.logout = function () {
+                	window.location.href = "/login";
+            	}
+		    });
+		    
+	</script>
+	
+	<div ng-app="staffMain" class="page-style" ng-controller="staffMainCtrl as ctrl">
+    <button class="logout-button" ng-click="logout()">Log Out</button>
+    <h1>Coffee Maker</h1>
+    <h3>Available Options:</h3>
+    <ul>
+        <li><a href="addInventory2.html">Add Inventory</a></li>
+        <li><a href="AddRecipe.html">Add A Recipe</a></li>
+        <li><a href="editRecipe.html">Edit Recipe</a></li>
+        <li><a href="deleterecipe.html">Delete Recipe</a></li>
+        <li><a href="AddIngredient.html">Add Ingredient</a></li>
+        <li><a href="fulfillOrder.html">View/Fulfill Beverage Order</li>
+        <li><a href="orderHistory.html">Order History</li>
+    </ul>
+</body>
+</html>

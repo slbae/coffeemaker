@@ -1,0 +1,347 @@
+<!DOCTYPE HTML>
+<head>
+    <html lang="en">
+    <title>Add a Recipe</title>
+
+    <style>
+        input.ng-valid {
+            background-color: lightgreen;
+        }
+
+        input.ng-dirty.ng-invalid-required, input.ng-dirty.ng-invalid-number {
+            background-color: red;
+        }
+
+        input.ng-dirty.ng-invalid-min {
+            background-color: yellow;
+        }
+
+
+    </style>
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            /* Global styles to make the entire page full-height and center its content */
+            html, body {
+                height: 100%;
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+            }
+
+            /* Main box style */
+            .page-style {
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                min-height: 100vh;
+            }
+
+            /* Main box */
+            .main-box {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                min-width: 650px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+            }
+
+            .button {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 150px;
+                height: 50px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+            }
+
+            .horizontal-spacer {
+                width: 150px;
+                height: 1px;
+            }
+
+            .vertical-spacer {
+                width: 1px;
+                height: 30px;
+            }
+
+            .input-section {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                padding: 10px;
+            }
+
+            .input-section label {
+                margin-right: 10px; /* Adds a 10-pixel space to the right of the label */
+            }
+
+            .ingredients-box {
+
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                width: 500px;
+                height: 400px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+
+            }
+
+            .ingredients-box > p {
+                display: flex;
+                justify-content: space-between;
+
+            }
+
+            .ingredients-labels {
+                flex: 1
+            }
+
+            .input-section label:first-child {
+                margin-right: 10px; /* Adds a 10-pixel space to the right of the label */
+            }
+
+            .input-section input {
+                margin-right: 10px; /* Space before the delete label */
+            }
+
+            .menu-button {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 150px;
+                height: 50px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+                cursor: pointer;
+            }
+
+            table, th , td  {
+                border: 1px solid grey;
+                border-collapse: collapse;
+                padding: 5px;
+            }
+            table tr:nth-child(odd) {
+                background-color: #f1f1f1;
+            }
+            table tr:nth-child(even) {
+                background-color: #ffffff;
+            }
+
+        </style>
+    </head>
+    <body>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+    <script>
+
+        /*<![CDATA[*/
+        var app = angular.module('addRecipe', []);
+        app.controller('addRecipeCtrl', function ($scope, $http, $q) {
+
+            // Fetch the list of ingredients from the server
+            $http.get("api/v1/inventory").then(function (response) {
+                $scope.inventoryList = response.data.currentInventory;
+            }, function (rejection) {
+                console.error("Failed to fetch inventory list");
+            });
+
+            $scope.submit = function () {
+                $scope.createRecipe();
+                $scope.reset();
+            }
+
+            $scope.addIngredient = function () {
+                // copy the ingredient onto the list
+                console.log($scope.recipe)
+                $scope.recipe.ingredients.push({
+                    name: $scope.selectedIngredient.name,
+                    amount: $scope.selectedIngredient.requiredAmount
+                });
+                $scope.selectedIngredient = null;
+                if (undefined !== $scope.addIngredientForSubmissionForm) {
+                    $scope.addIngredientForSubmissionForm.$setPristine(); // reset Form
+                }
+            }
+
+            $scope.createRecipe = function () {
+                console.log($scope.recipe)
+                $scope.success = false;
+                $scope.failure = false;
+                $http.post("/api/v1/recipes", $scope.recipe)
+                    .then(function (response) {
+                        $scope.success = true;
+                        $scope.failure = false;
+                    }, function (rejection) {
+                        console.error("Invalid Recipe Submitted");
+                        $scope.failure = true;
+                        $scope.success = false;
+
+                    });
+            }
+
+            $scope.reset = function () {
+                console.log("reset");
+
+                $scope.recipe = {
+                    name: "",
+                    price: "",
+                    ingredients: []
+                };
+
+
+                if (undefined !== $scope.addRecipeForm) {
+                    $scope.addRecipeForm.$setPristine(); // reset Form
+                }
+            }
+
+            $scope.deleteIngredient = function(id) {
+                $scope.recipe.ingredients.splice(id, 1);
+
+                $scope.failure = false;
+                $scope.success = false;
+            };
+
+            $scope.ingredientFormReset = function () {
+                console.log("ingredient reset");
+                $scope.selectedIngredient = null;
+
+                if (undefined !== $scope.addRecipeForm) {
+                    $scope.addRecipeForm.$setPristine(); // reset Form
+                }
+            }
+
+            $scope.mainMenu = function () {
+                window.location.href = "/staffMainPage";
+            }
+
+
+            $scope.reset();
+        });
+
+
+        /*]]>*/
+    </script>
+
+    <div ng-app="addRecipe" class="page-style" ng-controller="addRecipeCtrl as ctrl">
+
+        <button class="menu-button" ng-click="mainMenu()">< Main Menu</button>
+
+        <div class="horizontal-spacer"></div>
+        <div class="main-box">
+            <form name="addRecipeForm" class="main-box">
+
+                <h1>Add a Recipe<br></h1>
+
+                <div class="vertical-spacer"></div>
+
+                <!-- Assign the new name to the recipeName variable declared in $scope -->
+                <div class="input-section">
+                    <label for="nameInput">Name: </label>
+                    <input type="text" id="nameInput" name="nameInput" ng-model="recipe.name" required>
+                </div>
+                <div class="input-box">
+                    <span ng-show="addRecipeForm.nameInput.$dirty && addRecipeForm.nameInput.$invalid"> The name cannot be empty.</span>
+                </div>
+                <div class="input-section">
+                    <label for="recipePrice">Price: </label>
+                    <input type="number" ng-min="1" name="recipePrice" id="recipePrice" ng-model="recipe.price"
+                           required>
+                </div>
+                <div class="input-box">
+                    <span ng-show="addRecipeForm.$error.min">Price must be above 0.</span>
+                </div>
+            </form>
+
+            <form name="addIngredientForSubmissionForm" class="main-box">
+
+                Select Ingredient For Recipe: <br/>
+                <div class="col-lg">
+                    <div class="input-section">
+                        <label for="ingredientSelector">Ingredient: </label>
+                        <select ng-model="selectedIngredient"
+                                id="ingredientSelector"
+                                name="ingredientSelector"
+                                ng-options="item as item.name for item in inventoryList"
+                                required>
+                        </select>
+                    </div>
+                    <div class="input-box">
+                        <span ng-show="addIngredientForm.nameInput.$dirty && addIngredientForm.nameInput.$invalid"> The name cannot be empty.</span>
+                    </div>
+                    <div id="amountDiv" class="input-section">
+                        <label for="ingredientRequiredAmount">Required Amount: </label>
+                        <input ng-model="selectedIngredient.requiredAmount"
+                               type="number"
+                               name="ingredientRequiredAmount"
+                               id="ingredientRequiredAmount"
+                               ng-min="1"
+                               required>
+                    </div>
+                    <div class="input-box">
+                        <span ng-show="addIngredientForSubmissionForm.$error.min">Amount must be above 0.</span>
+                    </div>
+                </div>
+                <button class="menu-button" ng-disabled="addIngredientForSubmissionForm.$invalid"
+                        ng-click="addIngredient()"> Add Ingredient
+                </button>
+
+                <div class="vertical-spacer"></div>
+
+                <div class="ingredients-box">
+
+
+
+
+                    <div class="ingredients-labels"> <h3>Current Ingredients in Recipe </h3>
+                    <!-- Pull the current list of ingredients and use the values entered as input
+                         Prob need to delete the current stuff									 -->
+                    <div ng-if="recipe">
+                        <table>
+                            <tr>
+                                <th> Index </th>
+                                <th> Name </th>
+                                <th> Amount</th>
+                                <th> Delete</th>
+                            </tr>
+                            <tr ng-repeat="(idx, ingredient) in recipe.ingredients">
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ ingredient.name }}</td>
+                                <td>{{ ingredient.amount }}</td>
+                                <td> <button ng-click="deleteIngredient(idx)">Delete</button> </td>
+                            </tr>
+                        </table>
+                    </div>
+
+
+
+                        </div>
+
+                </div>
+
+                <div class="vertical-spacer"></div>
+
+                <div>
+                    <!-- Create a recipe using the values entered -->
+                    <div ng-show="success">Recipe Created</div>
+                    <div ng-show="failure">Error while adding recipe.</div>
+                    <button class="menu-button" ng-disabled="addRecipeForm.$invalid || recipe.ingredients.length < 1" ng-click="submit()"> Create
+                        Recipe
+                    </button>
+                </div>
+
+                <div class="vertical-spacer"></div>
+
+            </form>
+        </div>
+    </div>
+    </body>
+    </html>

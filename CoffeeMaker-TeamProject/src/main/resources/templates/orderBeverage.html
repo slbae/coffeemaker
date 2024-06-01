@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Beverage</title>
+    <style>
+        body {
+            font-family: monospace;
+            text-align: center;
+            background-image: url('https://i.pinimg.com/736x/98/c8/12/98c812e99b3fb5c7a8519292207d12b5.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            text-align: center;
+            height: 80%; /* Adjusted height to 80% */
+        }
+
+        h1 {
+            color: #333;
+            font-size: 36px;
+        }
+
+        label {
+            display: block;
+            margin-top: 30px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        select {
+            padding: 15px;
+            font-size: 20px;
+            border: 1px solid #999;
+            border-radius: 10px;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 15px 30px;
+            font-size: 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 30px;
+        }
+
+        button:hover {
+            background-color: #2e7d32;
+        }
+
+        .popup {
+            display: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+	<div ng-app="orderBeverage" class="page-style" ng-controller="orderBeverageCtrl as ctrl">
+    <div class="container">
+        <h1>Order Beverage</h1>
+        <label for="recipeDropdown">Select Recipe:</label>
+        <select id="recipeDropdown" ng-options="recipe.name for recipe in recipes track by recipe.name" ng-model="selectedRecipe"></select>
+        <label for="paymentInput">Enter Payment:</label>
+        <input type="number" id="paymentInput" placeholder="Enter payment amount">
+        <div>
+            <button id="placeOrderBtn">Place Order</button>
+        </div>
+        <div class="popup" id="statusPopup">
+            <h2>Status of Order:</h2>
+            <button onclick="showStatus()" style="margin-top: 20px;">Check Status</button>
+        </div>
+    </div>
+	</div>
+	
+	<!-- Inject User ID from Server-Side Session -->
+    <script>
+        var userNameFromSession = '${session.userName}';
+    </script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+    <script>
+    	var app = angular.module('orderBeverage', []);
+		app.controller('orderBeverageCtrl', function($scope, $http, $q) {
+			$http.get("/api/v1/recipes").then(function(response) {
+				$scope.recipes = response.data;
+			});
+     	// Using a simple JavaScript object to store order status
+        const orderStatus = {};
+
+        $scope.showStatus = function() {
+            const selectedRecipe = document.getElementById("recipeDropdown").value;
+            const status = orderStatus[selectedRecipe] || "Not available";
+            alert(`Status of your ${selectedRecipe} order: ${status}`);
+        }
+        
+        $scope.order = {
+            recipeName: "",
+            customerId: 1,
+            orderNumber: null
+        };
+        
+        $scope.createOrder = function () {
+                $scope.success = false;
+                $scope.failure = false;
+                console.log($scope.order);
+                
+                $scope.currentUserId = -1;
+                // Get the current user's ID number
+                $http.get("/api/user/current").then(function (response) {
+					
+					$scope.currentUserId = response.data;
+					console.log( $scope.currentUserId);
+					
+				}, function(rejection) {
+					// No such thing
+				});
+                
+                $http.get("api/v1/orders/all").then(function (response) {
+                    $scope.orderList = response.data;
+                    console.log($scope.orderList);
+                    console.log("^ Order List Data Pull");
+                    
+                    $scope.order.orderNumber = $scope.orderList.length + 1;
+                	
+                	
+                	$scope.order.customerId = $scope.currentUserId;
+                	console.log($scope.order);
+                $http.post(`/api/v1/orders/all/${$scope.order.orderNumber}`, $scope.order)
+                    .then(function (response) {
+						console.log(response);
+                        $scope.success = true;
+                        $scope.failure = false;
+                    }, function (rejection) {
+                        console.error("Error while adding order");
+                        $scope.failure = true;
+                        $scope.success = false;
+
+                    });
+                }, function (rejection) {
+                    console.error("Failed to fetch current orders list");
+                });
+        }
+
+        document.getElementById("placeOrderBtn").addEventListener("click", function() {
+            const selectedRecipe = document.getElementById("recipeDropdown");
+            const paymentInput = document.getElementById("paymentInput");
+            
+            console.log(selectedRecipe.value);
+            console.log(paymentInput.value);
+
+            // Check if a recipe is selected
+            if (selectedRecipe.value == '?') {
+                alert("Please select a recipe.");
+                return;
+            }
+            
+
+            // Get the selected recipe price
+            var selectedRecipePrice;
+
+            // Get the entered payment amount
+            const paymentAmount = parseFloat(paymentInput.value);
+            
+            console.log(paymentAmount)
+            console.log(selectedRecipePrice)
+            
+ 
+			$http.get("/api/v1/recipes/" + selectedRecipe.value).then(function(response) {
+						// Assign the recipe to the pulledRecipe value
+					console.log(response.data.price)
+					selectedRecipePrice = response.data.price;
+					if (paymentAmount >= selectedRecipePrice) {
+                		// Calculate and display change
+                		const change = paymentAmount - selectedRecipePrice;
+                		alert(`Order placed! Your change: $${change.toFixed(2)}`);
+                		$scope.order.recipeName = selectedRecipe.value;
+                		console.log($scope.order.recipeName);
+                		$scope.createOrder();
+
+                		// Update the order status based on the API response
+                		//const orderApiResponse = /* Include the order status in the API response */
+                		//orderStatus[selectedRecipe.value.name] = orderApiResponse.status;
+
+                		//document.getElementById("statusPopup").style.display = "block";
+
+            		} else {
+                		alert("Insufficient payment. Please enter a valid amount.");
+            		}
+	
+			}, function(rejection) {
+						
+					console.error("Cannot pull recipe")
+						
+			})
+
+            // Check if payment is greater than or equal to the recipe price
+            /**if (paymentAmount >= selectedRecipePrice) {
+                // Calculate and display change
+                const change = paymentAmount - selectedRecipePrice;
+                alert(`Order placed! Your change: $${change.toFixed(2)}`);
+
+                // Update the order status based on the API response
+                const orderApiResponse = /* Include the order status in the API response 
+                orderStatus[selectedRecipe.value.name] = orderApiResponse.status;
+
+                document.getElementById("statusPopup").style.display = "block";
+
+            } else {
+                alert("Insufficient payment. Please enter a valid amount.");
+            }*/
+        });
+        });
+    </script>
+</body>
+</html>

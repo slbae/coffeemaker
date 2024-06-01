@@ -1,0 +1,248 @@
+<!DOCTYPE HTML>
+<head>
+    <html lang="en">
+    <title>Add a Recipe</title>
+
+    <style>
+        input.ng-valid {
+            background-color: lightgreen;
+        }
+
+        input.ng-dirty.ng-invalid-required, input.ng-dirty.ng-invalid-number {
+            background-color: red;
+        }
+
+        input.ng-dirty.ng-invalid-min {
+            background-color: yellow;
+        }
+
+
+    </style>
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            /* Global styles to make the entire page full-height and center its content */
+            html, body {
+                height: 100%;
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+            }
+
+            /* Main box style */
+            .page-style {
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                min-height: 100vh;
+            }
+
+            /* Main box */
+            .main-box {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                min-width: 650px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+            }
+
+            .button {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 150px;
+                height: 50px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+            }
+
+            .horizontal-spacer {
+                width: 150px;
+                height: 1px;
+            }
+
+            .vertical-spacer {
+                width: 1px;
+                height: 30px;
+            }
+
+            .input-section {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                padding: 10px;
+            }
+
+            .input-section label {
+                margin-right: 10px; /* Adds a 10-pixel space to the right of the label */
+            }
+
+            .ingredients-box {
+
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                width: 500px;
+                height: 400px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+
+            }
+
+            .ingredients-box > p {
+                display: flex;
+                justify-content: space-between;
+
+            }
+
+            .ingredients-labels {
+                flex: 1
+            }
+
+            .input-section label:first-child {
+                margin-right: 10px; /* Adds a 10-pixel space to the right of the label */
+            }
+
+            .input-section input {
+                margin-right: 10px; /* Space before the delete label */
+            }
+
+            .menu-button {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 150px;
+                height: 50px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+                cursor: pointer;
+            }
+
+            table, th , td  {
+                border: 1px solid grey;
+                border-collapse: collapse;
+                padding: 5px;
+            }
+            table tr:nth-child(odd) {
+                background-color: #f1f1f1;
+            }
+            table tr:nth-child(even) {
+                background-color: #ffffff;
+            }
+
+        </style>
+    </head>
+    <body>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+    <script>
+
+        /*<![CDATA[*/
+        var app = angular.module('updateInventory', []);
+        app.controller('updateInventoryCtrl', function ($scope, $http, $q) {
+
+            // Fetch the list of ingredients from the server
+            $http.get("api/v1/inventory").then(function (response) {
+				$scope.inventory = response.data;
+                $scope.inventoryList = response.data.currentInventory;
+                console.log($scope.inventoryList)
+            }, function (rejection) {
+                console.error("Failed to fetch inventory list");
+            });
+
+            $scope.submit = function () {
+                $scope.updateInventory();
+                $scope.reset();
+            }
+
+            $scope.mainMenu = function () {
+                window.location.href = "/staffMainPage";
+            }
+            
+            $scope.updateIngredient = function(idx, ingredient) {
+				
+				$scope.inventoryList[idx] = ingredient;
+				$scope.inventory.currentInventory = $scope.inventoryList;
+				
+				$http.put("/api/v1/inventory", $scope.inventory).then(function(response) {
+							console.log("Updated Inventory!")
+
+						}, function(rejection) {
+							$scope.failure = true;
+							$scope.success = false;
+							console.error("Error while updating Inventory!");
+						});
+				
+				console.log("Ingredient Updated")
+			}
+
+			$scope.reset = function () {
+                console.log("reset");
+
+                if (undefined !== $scope.updateInventoryForm) {
+                    $scope.updateInventoryForm.$setPristine(); // reset Form
+                }
+            }
+
+            $scope.reset();
+        });
+
+
+        /*]]>*/
+    </script>
+    
+    <div ng-app="updateInventory" class="page-style" ng-controller="updateInventoryCtrl as ctrl">
+		
+		<button class="menu-button" ng-click="mainMenu()">< Main Menu</button>
+		
+		<div class="horizontal-spacer"></div>
+		
+		<div class="main-box">
+			
+			<form name="updateInventoryForm" class="main-box">
+				
+				<h1>Update Inventory<br></h1>
+				
+				<div class="vertical-spacer"></div>
+				
+				<div class="inventory-labels">
+                    <!-- Pull the current list of ingredients and use the values entered as input
+                         Prob need to delete the current stuff									 -->
+                    <div ng-if="inventoryList">
+                        <table>
+							<tr>
+								<h2> Current Inventory </h2>
+							</tr>
+                            <tr>
+                                <th> Index </th>
+                                <th> Name </th>
+                                <th> Amount </th>
+                                <th> Update </th>
+                            </tr>
+                            <tr ng-repeat="(idx, ingredient) in inventoryList">
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ ingredient.name }}</td>
+                                <td>
+									<input type="number" ng-min="1" name="ingredientInventory" id="ingredientInventory" ng-model="ingredient.amount" required>
+								</td>
+                                <td> <button ng-click="updateIngredient(idx, ingredient)" ng-disabled="updateInventoryForm.$invalid">Update</button> </td>
+                            </tr>
+                        </table>
+                    </div>
+               </div>
+               
+               <div class="vertical-spacer"></div>
+				
+			</form>
+			
+		</div>
+		
+	</div>
+    
+</head>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pickup Order</title>
+    <style>
+        body {
+            font-family: monospace;
+            text-align: center;
+            background-image: url('https://i.pinimg.com/736x/98/c8/12/98c812e99b3fb5c7a8519292207d12b5.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 36px;
+        }
+
+        label {
+            display: block;
+            margin-top: 30px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        select {
+            padding: 15px;
+            font-size: 20px;
+            border: 1px solid #999;
+            border-radius: 10px;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 15px 30px;
+            font-size: 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 30px;
+        }
+
+        button:hover {
+            background-color: #2e7d32;
+        }
+
+        .popup {
+            display: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+	<div ng-app="pickupOrder" class="page-style" ng-controller="pickupOrderCtrl as ctrl">
+    <div class="container">
+        <h1>Pickup Order</h1>
+        <label for="orderDropdown">Select Order to Pickup:</label>
+        <li ng-repeat="order in orders">
+                    <label>
+                        {{order.orderNumber}}
+                        <input type="radio" ng-model="$parent.selectedOrder" ng-value="{{order}}" />
+                    </label>
+                </li>
+        <!--<select id="orderDropdown" ng-options="order.orderNumber for order in orders" ng-model="$parent.selectedOrder" ng-value="{{order}}"></select>
+        --><label for="pickupInput">Pickup Order:</label>
+        <div>
+            <button id="pickupBtn">Pickup</button>
+        </div>
+    </div>
+    </div>
+
+
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+    <script>
+    	var app = angular.module('pickupOrder', []);
+        app.controller('pickupOrderCtrl', function ($scope, $http, $q) {
+            // Define selectedOrder
+            //var selectedOrder = $scope.selectedOrder;
+            $scope.selectedOrder = null;
+            
+            $scope.currentUserId = -1;
+            // Get the current user's ID number
+            $http.get("/api/user/current").then(function (response) {
+					
+			$scope.currentUserId = response.data;
+			console.log( $scope.currentUserId);
+			
+			$http.get("/api/v1/orders/fulfilled/" + $scope.currentUserId).then(function(response) {
+				console.log(response)
+				$scope.orders = response.data;
+			});
+					
+			}, function(rejection) {
+				// No such thing
+			});
+
+            document.getElementById("pickupBtn").addEventListener("click", function () {
+                const selectedOrderDropdown = document.getElementById("orderDropdown");
+
+				console.log($scope.selectedOrder);
+				
+                // Check if an order is selected
+                if (!$scope.selectedOrder) {
+                    alert("Please select an order.");
+                    return;
+                }
+
+                // Get the selected order's ID using selectedOrder.getId()
+                var orderId = $scope.selectedOrder.orderNumber;
+
+               // Make the HTTP request with the selected order's ID
+                $http.get("/api/v1/orders/all/" + orderId).then(function (response) {
+                    $scope.orders = response.data;
+                });
+
+                // Perform other actions as needed
+                //$scope.selectedOrder.pickUp();
+                //console.log("Successful pick up!");
+                if ($scope.selectedOrder) {
+                    $scope.success = false;
+                    $scope.failure = false;
+
+                    $http.put("/api/v1/orders/fulfilled/" + $scope.selectedOrder.orderNumber).then(function (response) {
+                        $scope.success = true;
+                        $scope.failure = false;
+                        
+                        console.log(response);
+                        // Optionally, you may want to refresh the order list after fulfilling an order
+                        //$scope.init();
+                    }, function (rejection) {
+                        console.error("Cannot pickup order");
+                        $scope.failure = true;
+                        $scope.success = false;
+                    });
+                }
+                
+            });
+        });
+    </script>
+</body>
+</html>

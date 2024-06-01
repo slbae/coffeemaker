@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>View Orders</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" href="css/bootstrap.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+</head>
+<body ng-app="myApp" ng-controller="ordersCtrl" ng-init="init()">
+    <div layout:fragment="content" class="generic-container ng-cloak">
+        <h1>Orders</h1>
+        <div>
+            <ul>
+                <li ng-repeat="order in orderList">
+                    <label>
+                        {{order.recipeName}}
+                        <input type="radio" ng-model="$parent.selectedOrder" ng-value="{{order}}" />
+                    </label>
+                </li>
+            </ul>
+            <br /><br />
+
+            <button ng-click="fulfillOrder()">Fulfill Order</button>
+
+            <div ng-show="success" class="success">Order was successfully fulfilled.</div>
+            <div ng-show="failure" class="failure">An error occurred: {{error}}</div>
+
+            <br /> <a href="/staffMainPage.html">Home</a>
+        </div>
+    </div>
+
+    <script>
+        var app = angular.module('myApp', []);
+        app.controller('ordersCtrl', function ($scope, $http, $interval) {
+            $scope.orderList = [];
+            $scope.selectedOrder = null;
+            $scope.success = false;
+            $scope.failure = false;
+
+            $scope.init = function () {
+                // Get the current list of orders to populate the initial
+                $http.get("api/v1/orders/active").then(function (response) {
+                    $scope.orderList = response.data;
+                    console.log($scope.orderList);
+                    console.log("^Data Pull");
+                }, function (rejection) {
+                    console.error("Failed to fetch current orders list");
+                });
+            };
+
+            // Update the recipe
+            $scope.fulfillOrder = function () {
+				
+				console.log($scope.selectedOrder);
+                if ($scope.selectedOrder) {
+                    $scope.success = false;
+                    $scope.failure = false;
+
+                    $http.put("/api/v1/orders/all/" + $scope.selectedOrder.orderNumber).then(function (response) {
+                        $scope.success = true;
+                        $scope.failure = false;
+                        
+                        console.log(response);
+                        // Optionally, you may want to refresh the order list after fulfilling an order
+                        $scope.init();
+                    }, function (rejection) {
+                        console.error("Cannot fulfill order");
+                        $scope.failure = true;
+                        $scope.success = false;
+                    });
+                    
+                    $http.post("/api/v1/makecoffee/" + $scope.selectedOrder.recipeName).then(
+						function(response) {
+							$scope.change = response.data.message;
+							$scope.submissionSuccess = true;
+						}, function(errResponse) {
+							console.log(errResponse);
+							$scope.submissionFailure = true;
+							$scope.error = "Error while making recipe";
+						});
+                }
+            };
+
+            // Refresh the order list every 30 seconds
+            $interval(function () {
+                $scope.init();
+            }, 30000);
+        });
+    </script>
+</body>
+</html>

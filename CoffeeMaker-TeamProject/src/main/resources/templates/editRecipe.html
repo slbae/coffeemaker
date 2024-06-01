@@ -1,0 +1,448 @@
+<!DOCTYPE HTML>
+<head>
+	<html xmlns:th="http://www.thymeleaf.org">
+	<title>Edit a Recipe, Use Case Four</title>
+
+	<style>
+        input.ng-valid {
+            background-color: lightgreen;
+        }
+
+        input.ng-dirty.ng-invalid-required, input.ng-dirty.ng-invalid-number {
+            background-color: red;
+        }
+
+        input.ng-dirty.ng-invalid-min {
+            background-color: yellow;
+        }
+    </style>
+    
+    <head>
+		
+		<meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+			
+			/* Global styles to make the entire page full-height and center its content */
+            html, body {
+                height: 100%;
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+            }
+
+            /* Main box style */
+            .page-style {
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                min-height: 100vh;
+            }
+
+            /* Main box */
+            .main-box {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                min-width: 650px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+            }
+
+            .button {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 150px;
+                height: 50px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+            }
+
+            .horizontal-spacer {
+                width: 150px;
+                height: 1px;
+            }
+
+            .vertical-spacer {
+                width: 1px;
+                height: 30px;
+            }
+
+            .input-section {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                padding: 10px;
+            }
+
+            .input-section label {
+                margin-right: 10px; /* Adds a 10-pixel space to the right of the label */
+            }
+
+            .ingredients-box {
+
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                width: 500px;
+                height: 400px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+
+            }
+
+            .ingredients-box > p {
+                display: flex;
+                justify-content: space-between;
+
+            }
+
+            .ingredients-labels {
+                flex: 1
+            }
+
+            .input-section label:first-child {
+                margin-right: 10px; /* Adds a 10-pixel space to the right of the label */
+            }
+
+            .input-section input {
+                margin-right: 10px; /* Space before the delete label */
+            }
+
+            .menu-button {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 150px;
+                height: 50px;
+                border: 2pt solid black;
+                background-color: #ffffff;
+                cursor: pointer;
+            }
+
+            table, th , td  {
+                border: 1px solid grey;
+                border-collapse: collapse;
+                padding: 5px;
+            }
+            table tr:nth-child(odd) {
+                background-color: #f1f1f1;
+            }
+            table tr:nth-child(even) {
+                background-color: #ffffff;
+            }
+			
+			
+		</style>
+		
+		
+	</head>
+
+</head>
+	<body>
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+		
+		<script>
+			
+			/*<![CDATA[*/
+        	var app = angular.module('editRecipe', []);
+        	app.controller('editRecipeCtrl', function ($scope, $http, $q) {
+				
+				// Get the current list of recipes to populate the inital 
+				$http.get("api/v1/recipes").then(function (response) {
+					
+					$scope.recipeList = response.data;
+					console.log($scope.recipeList)
+					console.log("^Data Pull")
+					
+				}, function (rejection) {
+					
+					console.error("Failed to fetch recipe list");
+					
+				});
+				
+				// Submit the recipe
+				$scope.submit = function() {
+					console.log("Updated Recipe submitted, status pending")
+					$scope.updateRecipe();
+					$scope.reset();
+				}
+				
+				// Update the recipe
+				$scope.updateRecipe = function() {
+					
+					console.log($scope.pulledRecipe)
+					$scope.success = false;
+					$scope.failure = false;
+					
+					$http.post("/api/v1/recipes/" + $scope.pulledRecipe.name, $scope.pulledRecipe).then(function(response) {
+						$scope.success = true;
+						$scope.failure = false;
+					}, function (rejection) {
+						
+						console.error("Cannot update recipe");
+						$scope.failure = true;
+						$scope.success = false;
+						
+					});
+					
+				}
+				
+				$scope.deleteIngredient = function(id) {
+                	$scope.pulledRecipe.ingredients.splice(id, 1);
+
+                	$scope.failure = false;
+                	$scope.success = false;
+            	};
+            	
+            	$scope.getInventory = function() {
+					
+					$http.get("api/v1/inventory").then(function (response) {
+               			$scope.inventoryList = response.data.currentInventory;
+            		}, function (rejection) {
+                		console.error("Failed to fetch inventory list");
+            		});
+					
+				}
+				
+				$scope.pullRecipe = function() {
+					
+					console.log("Pulling Recipe")
+					console.log($scope.selectedRecipe.name)
+					
+					$http.get("/api/v1/recipes/" + $scope.selectedRecipe.name).then(function(response) {
+						// Assign the recipe to the pulledRecipe value
+						$scope.pulledRecipe = response.data;
+						// Assign the current list of ingredients to the recipeIngredients value
+						$scope.recipeIngredients = $scope.pulledRecipe.ingredients;
+						$scope.getInventory();
+						console.log("Pull successful")
+						console.log($scope.pulledRecipe)
+						console.log($scope.recipeIngredients)
+					}, function(rejection) {
+						
+						console.error("Cannot pull recipe")
+						
+					})
+					
+				}
+				
+				// Utilized following resources to implement this solution, mainly for how to use the find function
+				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find
+				// https://stackoverflow.com/questions/7364150/find-object-by-id-in-an-array-of-javascript-objects
+				$scope.updateAmount = function() {
+					
+    				// Find the ingredient in pulledRecipe.ingredients
+    				$scope.ingredientInPulledRecipe = $scope.pulledRecipe.ingredients.find(ingredient => ingredient.name === $scope.selectedIngredient.name);
+    				
+    				// If the recipe is not found, then the console will display an error, but it will not affect functionality for the user
+    				$scope.selectedIngredient.requiredAmount = $scope.ingredientInPulledRecipe.amount;
+				};
+				
+				// Utilized following resources to implement this solution, mainly for how to use the find function
+				// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find
+				// https://stackoverflow.com/questions/7364150/find-object-by-id-in-an-array-of-javascript-objects
+				$scope.addIngredient = function () {
+                	// copy the ingredient onto the list
+                	console.log("Adding ingredient")
+                	
+                	// Check if the ingredient exists
+                	$scope.existingIngredient = $scope.pulledRecipe.ingredients.find(ingredient => ingredient.name === $scope.selectedIngredient.name);
+
+                	// if it does, just modify it
+                	if ($scope.existingIngredient != null) {
+						
+						$scope.existingIngredient.amount = $scope.selectedIngredient.requiredAmount;
+						
+					}
+					else {
+						// otherwise, use the same stuff from AddRecipe
+                		$scope.pulledRecipe.ingredients.push({
+                    		name: $scope.selectedIngredient.name,
+                    		amount: $scope.selectedIngredient.requiredAmount
+                		});
+					}
+                	
+                	
+                	
+                	$scope.selectedIngredient = null;
+                	
+                	if (undefined !== $scope.modifyIngredientsForm) {
+                    	$scope.modifyIngredientsForm.$setPristine(); // reset Form
+                	}
+            	}				
+				
+				
+				$scope.mainMenu = function () {
+                	window.location.href = "/staffMainPage";
+            	}
+            	
+            	$scope.recipeFormReset = function () {
+                	console.log("recipe reset");
+                	$scope.selectedRecipe = null;
+            	}		
+            	
+            	$scope.reset = function () {
+                	console.log("reset");
+
+	                $scope.pulledRecipe = {
+    	                name: "",
+        	            price: "",
+            	        ingredients: []
+                	};
+
+
+                	if (undefined !== $scope.addRecipeForm) {
+                    	$scope.addRecipeForm.$setPristine(); // reset Form
+                	}
+            	}
+            
+				$scope.reset();
+			});
+			
+			
+			
+			/*]]>*/
+		</script>
+		
+		
+		<div ng-app="editRecipe" class="page-style" ng-controller="editRecipeCtrl as ctrl">
+			
+			<button class="menu-button" ng-click="mainMenu()">< Main Menu</button>
+			
+			<div class="horizontal-spacer"></div>
+			
+			<div class="main-box">
+				
+				<!-- Pulls in the recipe and has a feild for Price -->
+				<form name="editRecipeForm" class="main-box">
+					
+					<h1>Edit Recipe<br></h1>
+					
+					<div class="vertical-spacer"></div>
+					
+					<!--Dropdown menu for the user to choose the recipe to edit -->
+					Select Recipe to Edit<br/>
+					<div class="col-lg">
+						
+						<div class="input-section">
+							
+							<label for="recipeSelector">Recipe: </label>
+							
+							<select ng-model="selectedRecipe" id="recipeSelector" name="recipeSelector" ng-options="item as item.name for item in recipeList" required>
+								
+							</select>
+							
+						</div>
+						
+					</div>
+					
+					<button class="menu-button" ng-disabled="editRecipeForm.recipeSelector.$invalid"
+                        ng-click="pullRecipe()"> Search
+                	</button>
+                	
+                	<div class="vertical-spacer"></div>
+					<!-- Input feilds that have been auto-populated with the current values -->
+					
+					
+					<!-- Price Field -->
+					<div class="input-section">
+						
+                    	<label for="recipePrice">Price: </label>
+                    	
+                    	<input type="number" ng-min="1" name="recipePrice" id="recipePrice" ng-model="pulledRecipe.price" required>
+                    	
+                	</div>
+                	
+					<div class="vertical-spacer"></div>
+					
+				</form>
+				
+				<!-- Ingredients, Use the same style as add recipe -->
+				<form name="modifyIngredientsForm" class="main-box">
+					<h3>Modify Ingredients for Recipe <br/></h3>
+					
+					<div class="col-lg">
+						
+						<div class="input-section">
+							
+							<label for="ingredientSelector">Ingredient: </label>
+							
+							<select ng-model="selectedIngredient" id="ingredientSelector" name="ingredientSelector" ng-options="item as item.name for item in inventoryList" ng-change="updateAmount()" required>
+								
+							</select>
+						</div>
+                    	
+                    	<!-- Populate the input field with the current value of the choosen ingredient 
+                    	     Whenever the user modifies and updates the ingredient value, it will automatically update in the table -->
+                    	
+                    	<div id="amountDiv" class="input-section">
+                        	<label for="ingredientRequiredAmount">New Required Amount: </label>
+                        	<input ng-model="selectedIngredient.requiredAmount" type="number" name="ingredientRequiredAmount" id="ingredientRequiredAmount" ng-min="1" required>
+                    	</div>
+                    	<div class="input-box">
+                        	<span ng-show="modifyIngredientsForm.$error.min">Amount must be above 0.</span>
+                    	</div>
+						
+					</div>
+					<button class="menu-button" ng-disabled="modifyIngredientsForm.$invalid"
+                        ng-click="addIngredient()"> Update/Add Ingredient
+                	</button>
+					
+					<div class="vertical-spacer"></div>
+
+                	<div class="ingredients-box">
+						
+						<div class="ingredients-labels"> <h3>Current Ingredients in Recipe </h3>
+                    <!-- The current list of ingredients in the recipe, the user can delete the ingredient
+                    	 or modify the value -->
+                    		<div ng-if="pulledRecipe">
+                        		<table>
+                            		<tr>
+                                		<th> Index </th>
+                                		<th> Name </th>
+                                		<th> Amount</th>
+                                		<th> Delete</th>
+                            		</tr>
+                            		<tr ng-repeat="(idx, ingredient) in pulledRecipe.ingredients">
+                                		<td>{{ $index + 1 }}</td>
+                                		<td>{{ ingredient.name }}</td>
+                                		<td>{{ ingredient.amount }}</td>
+                               		 <td> <button ng-click="deleteIngredient(idx)">Delete</button> </td>
+                            		</tr>
+                        		</table>
+                    		</div>
+						
+						
+						
+					</div>
+					
+					
+				</form>
+				
+			</div>
+			
+			<div class="vertical-spacer"></div>
+			
+            <div>
+            	<!-- Create a recipe using the values entered -->
+                <div ng-show="success">Recipe Modified</div>
+                <div ng-show="failure">Error while updating recipe.</div>
+                <button class="menu-button" ng-disabled="updateRecipeForm.$invalid || pulledRecipe.ingredients.length < 1" ng-click="submit()"> Update
+                    Recipe
+                </button>
+            </div>
+
+            <div class="vertical-spacer"></div>			
+			
+			
+			
+			
+		</div>
+		
+	</body>
+</html>

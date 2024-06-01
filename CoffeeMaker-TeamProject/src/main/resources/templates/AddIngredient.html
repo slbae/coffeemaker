@@ -1,0 +1,181 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<title>Add Ingredient (Use Case Seven)</title>
+<style>
+    input.ng-valid {
+        background-color: lightgreen;
+    }
+
+    input.ng-dirty.ng-invalid-required, input.ng-dirty.ng-invalid-number {
+        background-color: red;
+    }
+
+    input.ng-dirty.ng-invalid-min {
+        background-color: yellow;
+    }
+
+
+</style>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Global styles to make the entire page full-height and center its content */
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        /* Main box style */
+        .page-style {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        /* Main box */
+        .main-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            width: 650px;
+            height: 400px;
+            border: 2pt solid black;
+            background-color: #ffffff;
+        }
+
+        .menu-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 150px;
+            height: 50px;
+            border: 2pt solid black;
+            background-color: #ffffff;
+            cursor: pointer;
+        }
+
+        .horizontal-spacer {
+            width: 150px;
+            height: 1px;
+        }
+
+        .vertical-spacer {
+            width: 1px;
+            height: 50px;
+        }
+
+        .input-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding-top: 10px;
+        }
+
+    </style>
+    <title></title>
+</head>
+<body>
+<div layout:fragment="content">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+    <script>
+        /* Without these comments, Thymeleaf will try to parse the Javascript as XML and break itself sometimes */
+        /*<![CDATA[*/
+        var app = angular.module('myApp', []);
+        app.controller('populateCtrl', function ($scope, $http, $q) {
+
+            $scope.reset = function() {
+                console.log("reset");
+                $scope.ingredient = {
+                    name: "",
+                    amount: ""};
+                if (undefined !== $scope.addIngredientForm) {
+                    $scope.addIngredientForm.$setPristine(); // reset Form
+                }
+            }
+
+            $scope.submit = function() {
+                $scope.createIngredient();
+                $scope.reset();
+            }
+
+            $scope.postResultMessage = "Hello World!";
+
+            $scope.createIngredient = function () {
+                $scope.success = false;
+                $scope.failure = false;
+                $http.post(`/api/v1/ingredients/${$scope.ingredient.name}`, $scope.ingredient)
+                    .then(function (response) {
+                        $scope.success = true;
+                        $scope.failure = false;
+                    }, function (rejection) {
+                        console.error("Error while adding ingredient");
+                        $scope.failure = true;
+                        $scope.success = false;
+
+                    });
+            }
+
+
+            $scope.mainMenu = function () {
+                window.location.href = "/staffMainPage";
+            }
+
+            $scope.reset();
+
+
+        });
+
+        /* Without these comments, Thymeleaf will try to parse the Javascript as XML and break itself sometimes */
+        /*]]>*/
+    </script>
+</div>
+<div ng-app="myApp" ng-controller="populateCtrl">
+
+
+    <div class="page-style">
+        <button class="menu-button" ng-click="mainMenu()">< Main Menu</button>
+        <div class="horizontal-spacer"></div>
+        <form name="addIngredientForm" class="main-box">
+
+            <h1>Add Ingredient<br></h1>
+
+            <div class="vertical-spacer"></div>
+
+
+            <div class="input-section">
+                <label for="nameInput">Name: </label>
+                <input type="text" id="nameInput" name="nameInput" ng-model="ingredient.name" required>
+            </div>
+            <div class="input-box">
+            <span ng-show="addIngredientForm.nameInput.$dirty && addIngredientForm.nameInput.$invalid"> The name cannot be empty.</span>
+            </div>
+            <div id="amountDiv" class="input-section">
+                <label for="ingredientAmount">Initial Amount: </label>
+                <input type="number" ng-min="1" name="ingredientAmount" id="ingredientAmount" ng-model="ingredient.amount" required>
+            </div>
+            <div class="input-box">
+            <span ng-show="addIngredientForm.$error.min">Amount must be above 0.</span>
+            </div>
+
+            <div class="vertical-spacer"></div>
+
+            <div ng-show="success">Ingredient Created</div>
+            <div ng-show="failure">Error while adding ingredient.</div>
+            <button class="menu-button" ng-disabled="addIngredientForm.$invalid" ng-click="submit()"> Add Ingredient</button>
+
+        </form>
+    </div>
+
+
+</div>
+
+
+</body>
+</html>

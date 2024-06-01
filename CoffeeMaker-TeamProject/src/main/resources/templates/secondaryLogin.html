@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <style>
+        .wrapper {
+            font-family: monospace;
+            text-align: center;
+            margin-top: 10%;
+            background-color: #4caf50;
+            padding-bottom: 40px;
+            margin-left: 30%;
+            margin-right: 30%;
+            border: 5px solid #4caf50; 
+            border-radius: 10px;
+            box-shadow: 0dvw 0dvw 2dvw #4caf50;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 44px;
+        }
+
+        form {
+            margin: 0 auto;
+            max-width: 300px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 22px;;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        input[type="submit"] {
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #2e7d32;
+        }
+    </style>
+</head>
+
+	
+	<script
+	src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+<body>
+	<script th:inline="javascript">
+
+		var app = angular.module('Login', []);
+		app.controller('loginCtrl', function($scope, $http, $q) {
+			//$http.post("/api/v1/username").then(function(response) {
+				//$scope.recipes = response.data;
+			//});
+			
+			
+			
+			// Generate the Users using our API POST call
+			$scope.generateUsers = function() {
+				console.log("Generating");
+                $http.post("api/v1/generateUsers").then(function(success) {
+					console.log("Generated")
+                }, function(failure) {
+
+                });
+           }
+           
+           // Is this needed to allow a user to login in?	
+			$scope.make = function() {
+				console.log("The click worked");
+				var username = $scope.username;
+				var password = $scope.password;
+				$scope.submissionFailure = false;
+				$scope.submissionSuccess = false;
+				
+				console.log(username + " " + password);
+				
+				/* This is only for generating user objects | From iTrust
+				document.getElementById("username").value = username;
+				document.getElementById("password").value = password;
+				document.forms[0].submit();
+				
+				console.log("We at least got to submit()");
+				*/
+				
+				/* We no longer have a GET for login, it needs to be done through WebSecurityConfig
+				
+				$http.get("/api/v1/users/login/" + username, password).then(
+						function(response) {
+							$scope.UserRole = response.data.role;
+							$scope.submissionSuccess = true;
+							
+							console.log(response.data);
+							
+							if (username == "Tyler" || username == "Helen" || username == "Caleb" ) {
+								window.location.href = "/staffMainPage.html";
+							}
+							else {
+								window.location.href = "/customerMainPage.html";
+							}
+							
+							
+							
+						}, function(errResponse) {
+							console.log(errResponse);
+							$scope.submissionFailure = true;
+							$scope.error = "Error while logging in";
+							console.log($scope.error);
+						});
+						
+				*/
+
+			}
+		});
+	</script>
+	<div ng-app="Login" class="page-style" ng-controller="loginCtrl as ctrl">
+    <div class="wrapper">
+    	<h1>Login</h1>
+    
+    	<button class="btn btn-primary btn-sm" ng-click="generateUsers()" name="genUsers">Generate Users</button>
+        <!-- Posts the username and password to /login which is handled by the WebSecurityConfig class -->
+    	<form action="/login" method="post">
+        	<label for="username">Username:</label>
+        	<input type="text" id="username" name="username" required ng-model="username">
+
+        	<label for="password">Password:</label>
+        	<input type="password" id="password" name="password" required ng-model="password">
+
+        	<input type="submit" value="Login">
+    	</form>
+    </div>
+    
+    
+    </div>
+</body>
+</html>
